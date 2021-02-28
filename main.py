@@ -16,7 +16,9 @@ def print_hi(name):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     data_list = utils.read_data(data_path)
-    print(data_list)
+    for i in data_list:
+        print(len(i[0]), " ", len(i[1]))
+    # print(data_list)
     print_hi('PyCharm')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

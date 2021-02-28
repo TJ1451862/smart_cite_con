@@ -27,11 +27,12 @@ if __name__ == '__main__':
     eval_df = load_data(eval_data_path)
 
     # Optional model configuration
-    model_args = ClassificationArgs(num_train_epochs=1)
+    # max_seq_length=128?sliding_window=true todo 是否有必要设置这两个参数
+    model_args = ClassificationArgs(num_train_epochs=1, max_seq_length=512, learning_rate=1e-4)
 
     # Create a ClassificationModel
     print("Is cuda available?: ", cuda_available)
-    model = ClassificationModel("roberta", "roberta-base", use_cuda=cuda_available)
+    model = ClassificationModel("roberta", "roberta-base", use_cuda=cuda_available, args=model_args)
 
     # Train the model
     model.train_model(train_df)
