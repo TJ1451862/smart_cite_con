@@ -1,6 +1,9 @@
 from simpletransformers.classification import (ClassificationModel, ClassificationArgs)
 import pandas as pd
 import logging
+import torch
+
+cuda_available = torch.cuda.is_available()
 
 logging.basicConfig(level=logging.INFO)
 transformers_logger = logging.getLogger("transformers")
@@ -43,7 +46,7 @@ eval_df.columns = ["text_a", "text_b", "labels"]
 model_args = ClassificationArgs(num_train_epochs=1)
 
 # Create a ClassificationModel
-model = ClassificationModel("roberta", "roberta-base", use_cuda=False)
+model = ClassificationModel("roberta", "roberta-base", use_cuda=cuda_available)
 
 # Train the model
 model.train_model(train_df)
