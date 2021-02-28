@@ -30,6 +30,7 @@ if __name__ == '__main__':
     model_args = ClassificationArgs(num_train_epochs=1)
 
     # Create a ClassificationModel
+    print("Is cuda available?: ", cuda_available)
     model = ClassificationModel("roberta", "roberta-base", use_cuda=cuda_available)
 
     # Train the model
