@@ -15,10 +15,11 @@ def load_data(data_path):
     return df
 
 
-eval_data_path = "/home/guochenrui/smart_cite_con/data/test_data.csv"
-train_data_path = "/home/guochenrui/smart_cite_con/data/train_data.csv"
+eval_data_path = "/home/guochenrui/smart_cite_con/data2019/eval_data.csv"
+train_data_path = "/home/guochenrui/smart_cite_con/data2019/training_data.csv"
 
 if __name__ == '__main__':
+
     logging.basicConfig(level=logging.INFO)
     transformers_logger = logging.getLogger("transformers")
     transformers_logger.setLevel(logging.WARNING)
@@ -27,13 +28,18 @@ if __name__ == '__main__':
     eval_df = load_data(eval_data_path)
 
     # Optional model configuration
-    # max_seq_length=128?sliding_window=true todo 是否有必要设置这两个参数, weight_decay 1e-5 - 1e-2
-    model_args = ClassificationArgs(num_train_epochs=10, learning_rate=4e-5)
+    # weight_decay 1e-5 - 1e-2
+    model_args = ClassificationArgs(num_train_epochs=20, learning_rate=2e-5)
     model_args.save_model_every_epoch = False
     model_args.save_eval_checkpoints = False
+
     model_args.use_early_stopping = True
     model_args.early_stopping_patience = 5
     model_args.weight_decay = 0
+    model_args.wandb_project = "scc"
+    model_args.output_dir = "outputs14"
+    model_args.train_batch_size = 16
+
 
     # Create a ClassificationModel
     print("Is cuda available?: ", cuda_available)
@@ -49,7 +55,10 @@ if __name__ == '__main__':
     recall = result['tp']/(result['tp']+result['fn'])
     f1 = 2*precision*recall/(precision+recall)
 
-    print("precision: ", precision)
-    print("recall: ", recall)
-    print("f1: ", f1)
-
+    print("mcc: %.2f %%" % (result['mcc'] * 100))
+    print("auroc: %.2f %%" % (result['auroc'] * 100))
+    print("auprc: %.2f %%" % (result['auprc'] * 100))
+    print("eval_loss: %.2f %%" % (result['eval_loss'] * 100))
+    print("precision: %.2f %%" % (precision*100))
+    print("recall: %.2f %%" % (recall*100))
+    print("f1: %.2f %%" % (f1*100))
