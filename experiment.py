@@ -101,7 +101,7 @@ def raw_train():
 def train_with_early_stopping():
     train_df, eval_df, model_args = init()
     early_stopping_setting(model_args)
-    train(train_df, eval_df, model_args)
+    return train(train_df, eval_df, model_args)
 
 
 def train_with_sweep():
@@ -127,7 +127,8 @@ if __name__ == '__main__':
     transformers_logger.setLevel(logging.WARNING)
 
     # 仅训练和评估
-    result = raw_train()
-    print(result)
+    # result = raw_train()
 
     # 使用early stopping
+    result = train_with_early_stopping()
+    print(result)
