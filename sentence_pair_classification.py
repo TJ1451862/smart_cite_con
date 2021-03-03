@@ -2,6 +2,7 @@ from simpletransformers.classification import (ClassificationModel, Classificati
 import pandas as pd
 import logging
 import torch
+import sklearn
 
 cuda_available = torch.cuda.is_available()
 
@@ -49,10 +50,10 @@ model_args = ClassificationArgs(num_train_epochs=1)
 model = ClassificationModel("roberta", "roberta-base", use_cuda=cuda_available)
 
 # Train the model
-model.train_model(train_df)
+model.train_model(train_df, f1=sklearn.metrics.f1_score)
 
 # Evaluate the model
-result, model_outputs, wrong_predictions = model.eval_model(eval_df)
+result, model_outputs, wrong_predictions = model.eval_model(eval_df, f1=sklearn.metrics.f1_score)
 
 # Make predictions with the model
 predictions, raw_outputs = model.predict(
