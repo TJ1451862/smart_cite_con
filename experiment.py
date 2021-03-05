@@ -23,7 +23,7 @@ train_data_path = "/home/guochenrui/smart_cite_con/data2019/training_data.csv"
 
 def early_stopping_setting(model_args: ClassificationArgs):
     model_args.use_early_stopping = True
-    model_args.early_stopping_patience = 3
+    model_args.early_stopping_patience = 5
     model_args.early_stopping_delta = 0.01
     model_args.early_stopping_metric = "f1"
     model_args.early_stopping_metric_minimize = False
@@ -36,12 +36,11 @@ def hyperparameter_setting(model_args: ClassificationArgs):
     model_args.learning_rate = 2e-5
     # weight_decay 1e-5 - 1e-2
     model_args.weight_decay = 0
-    model_args.train_batch_size = 32
+    model_args.train_batch_size = 8
     # model_args.eval_batch_size = 32
 
 
 def sweep_setting(model_args: ClassificationArgs):
-    model_args.wandb_project = "scc"
     model_args.reprocess_input_data = True
     model_args.evaluate_during_training = True
     model_args.overwrite_output_dir = True
@@ -50,8 +49,11 @@ def sweep_setting(model_args: ClassificationArgs):
 
 
 def other_setting(model_args: ClassificationArgs):
+    model_args.wandb_project = "scc"
+
     model_args.save_model_every_epoch = False
     model_args.save_eval_checkpoints = False
+
     model_args.overwrite_output_dir = True
     model_args.output_dir = "outputs"
 
@@ -77,7 +79,6 @@ def output_eval_result(result):
     print("recall: %.2f %%" % (result['recall'] * 100))
     print("f1: %.2f %%" % (result['f1'] * 100))
 
-
 def train(train_df, eval_df, model_args):
     # Create a ClassificationModel
     model = ClassificationModel("bert", "allenai/scibert_scivocab_cased", use_cuda=cuda_available, args=model_args)
@@ -101,24 +102,27 @@ def raw_train():
 def train_with_early_stopping():
     train_df, eval_df, model_args = init()
     early_stopping_setting(model_args)
-    train(train_df, eval_df, model_args)
+    return train(train_df, eval_df, model_args)
 
 
-def train_with_sweep():
-    sweep_config = {
+sweep_config = {
         "method": "bayes",  # grid, random
         "metric": {"name": "f1", "goal": "maximum"},
         "parameters": {
             "num_train_epochs": {"values": [2, 3, 5]},
-            "learning_rate": {"min": 5e-5, "max": 4e-4},
+            "learning_rate": {"min": 1e-5, "max": 5e-5},
         },
     }
 
-    sweep_id = wandb.sweep(sweep_config, project="scc")
+sweep_id = wandb.sweep(sweep_config, project="scc")
 
+
+def train_with_sweep():
+    wandb.init()
     train_df, eval_df, model_args = init()
     sweep_setting(model_args)
     train(train_df, eval_df, model_args)
+    wandb.join()
 
 
 if __name__ == '__main__':
@@ -127,7 +131,11 @@ if __name__ == '__main__':
     transformers_logger.setLevel(logging.WARNING)
 
     # 仅训练和评估
-    result = raw_train()
-    print(result)
+    # result = raw_train()
 
     # 使用early stopping
+    result = train_with_early_stopping()
+    print(result)
+
+    # 使用sweep
+    wandb.agent(sweep_id, train_with_sweep())
