@@ -5,10 +5,12 @@ import logging
 import pandas as pd
 import sklearn
 import wandb
+import os.path as path_util
 
 cuda_available = torch.cuda.is_available()
 data_code = '2021030801'
 wandb_project_name = "scc" + data_code
+output_dir = "outputs"
 
 
 # todo 加载和切割数据
@@ -34,8 +36,8 @@ def early_stopping_setting(model_args: ClassificationArgs):
     model_args.evaluate_during_training_steps = 1000
 
 
-def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=32):
-    model_args.num_train_epochs = 128
+def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=128):
+    model_args.num_train_epochs = 1
     model_args.learning_rate = learning_rate
     # weight_decay 1e-5 - 1e-2
     model_args.weight_decay = 0
@@ -79,7 +81,15 @@ def init():
     return train_df, eval_df, test_df, model_args
 
 
-def output_eval_result(result):
+def output_wrong(wrong, path=output_dir):
+    list = []
+    path = path_util.join(path, "wrong_predictions.csv")
+    for i in wrong:
+        list.append([i.text_a, i.text_b, i.label])
+    utils.write_data(list, path)
+
+
+def output_eval_result(result, wrong=None):
     print("mcc: %.2f %%" % (result['mcc'] * 100))
     print("auroc: %.2f %%" % (result['auroc'] * 100))
     print("auprc: %.2f %%" % (result['auprc'] * 100))
@@ -89,6 +99,8 @@ def output_eval_result(result):
     print("f1: %.2f %%" % (result['f1'] * 100))
     print(result["report"])
     print(result["confusion"])
+    if wrong:
+        output_wrong(wrong)
 
 
 def train(train_df, eval_df, test_df, model_args):
@@ -106,7 +118,7 @@ def train(train_df, eval_df, test_df, model_args):
                                                                 report=sklearn.metrics.classification_report,
                                                                 precision=sklearn.metrics.precision_score,
                                                                 recall=sklearn.metrics.recall_score)
-    return result
+    return result, wrong_predictions
 
 
 def raw_train():
@@ -142,18 +154,20 @@ def train_with_sweep():
 
 train_batch_sizes = [8, 16, 32, 64, 128]
 learning_rates = [1e-5, 2e-5, 3e-5, 4e-5, 5e-5]
+output_dirs = ["output1", "outputs2", "outputs3", "outputs4", "outputs5"]
 
 
 def batch_testing():
     train_df, eval_df, test_df = load_all_data()
-    output_dirs = ["output1", "outputs2", "outputs3", "outputs4", "outputs5"]
     output_dirs.reverse()
     model_args = ClassificationArgs()
     early_stopping_setting(model_args)
     for train_batch_size in train_batch_sizes:
-        other_setting(model_args, output_dirs.pop())
+        output_dir1 = output_dirs.pop()
+        other_setting(model_args, output_dir1)
         hyperparameter_setting(model_args, train_batch_size=train_batch_size)
-        train(train_df, eval_df, test_df, model_args)
+        _, wrong = train(train_df, eval_df, test_df, model_args)
+        output_wrong(wrong, output_dir1)
 
     # for learning_rate in learning_rates:
     #     other_setting(model_args, output_dirs.pop())
@@ -167,12 +181,12 @@ if __name__ == '__main__':
     transformers_logger.setLevel(logging.WARNING)
 
     # 仅训练和评估
-    # result = raw_train()
+    result, wrong_predictions = raw_train()
 
     # 使用early stopping
     # result = train_with_early_stopping()
-    # output_eval_result(result)
+    output_eval_result(result, wrong_predictions)
 
-    batch_testing()
+    # batch_testing()
     # 使用sweep
     # wandb.agent(sweep_id, train_with_sweep())
