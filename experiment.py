@@ -7,8 +7,8 @@ import sklearn
 import wandb
 
 cuda_available = torch.cuda.is_available()
-date='2021030801'
-wandb_project_name = "scc"+data_code
+data_code = '2021030801'
+wandb_project_name = "scc" + data_code
 
 
 # todo 加载和切割数据
@@ -19,9 +19,9 @@ def load_data(data_path):
     return df
 
 
-train_data_path = "/home/chenruiguo/code/smart_cite_con/data/data"+data_code+"/train_set.csv"
-eval_data_path = "/home/chenruiguo/code/smart_cite_con/data/data"+data_code+"/eval_set.csv"
-test_data_path = "/home/chenruiguo/code/smart_cite_con/data/data"+data_code+"/test_set.csv"
+train_data_path = "/home/chenruiguo/code/smart_cite_con/data/data" + data_code + "/train_set.csv"
+eval_data_path = "/home/chenruiguo/code/smart_cite_con/data/data" + data_code + "/eval_set.csv"
+test_data_path = "/home/chenruiguo/code/smart_cite_con/data/data" + data_code + "/test_set.csv"
 
 
 def early_stopping_setting(model_args: ClassificationArgs):
