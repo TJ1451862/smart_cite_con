@@ -8,7 +8,7 @@ import wandb
 import os.path as path_util
 
 cuda_available = torch.cuda.is_available()
-data_code = '2021030801'
+data_code = '2021031401'
 wandb_project_name = "scc" + data_code
 output_dir = "outputs"
 
@@ -36,8 +36,8 @@ def early_stopping_setting(model_args: ClassificationArgs):
     model_args.evaluate_during_training_steps = 1000
 
 
-def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=128):
-    model_args.num_train_epochs = 1
+def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=32):
+    model_args.num_train_epochs = 128
     model_args.learning_rate = learning_rate
     # weight_decay 1e-5 - 1e-2
     model_args.weight_decay = 0
@@ -105,7 +105,10 @@ def output_eval_result(result, wrong=None):
 
 def train(train_df, eval_df, test_df, model_args):
     # Create a ClassificationModel
-    model = ClassificationModel("bert", "allenai/scibert_scivocab_cased", use_cuda=cuda_available, args=model_args)
+    # bert, bert-large-uncased bert-base-uncased bert-base-cased-finetuned-mrpc
+    # xlnet，xlnet-base-cased xlnet-large-cased
+    #
+    model = ClassificationModel("bert", "bert-base-cased", use_cuda=cuda_available, args=model_args)
 
     # Train the model
     model.train_model(train_df, eval_df=eval_df, f1=sklearn.metrics.f1_score,
@@ -162,17 +165,20 @@ def batch_testing():
     output_dirs.reverse()
     model_args = ClassificationArgs()
     early_stopping_setting(model_args)
-    for train_batch_size in train_batch_sizes:
+    # for train_batch_size in train_batch_sizes:
+    #     output_dir1 = output_dirs.pop()
+    #     other_setting(model_args, output_dir1)
+    #     hyperparameter_setting(model_args, train_batch_size=train_batch_size)
+    #     _, wrong = train(train_df, eval_df, test_df, model_args)
+    #     output_wrong(wrong, output_dir1)
+
+    for learning_rate in learning_rates:
         output_dir1 = output_dirs.pop()
         other_setting(model_args, output_dir1)
-        hyperparameter_setting(model_args, train_batch_size=train_batch_size)
+        hyperparameter_setting(model_args, learning_rate=learning_rate)
+        train(train_df, eval_df, test_df, model_args)
         _, wrong = train(train_df, eval_df, test_df, model_args)
         output_wrong(wrong, output_dir1)
-
-    # for learning_rate in learning_rates:
-    #     other_setting(model_args, output_dirs.pop())
-    #     hyperparameter_setting(model_args, learning_rate=learning_rate)
-    #     train(train_df, eval_df, test_df, model_args)
 
 
 if __name__ == '__main__':
@@ -181,12 +187,12 @@ if __name__ == '__main__':
     transformers_logger.setLevel(logging.WARNING)
 
     # 仅训练和评估
-    result, wrong_predictions = raw_train()
+    # result, wrong_predictions = raw_train()
 
     # 使用early stopping
     # result = train_with_early_stopping()
-    output_eval_result(result, wrong_predictions)
+    # output_eval_result(result, wrong_predictions)
 
-    # batch_testing()
+    batch_testing()
     # 使用sweep
     # wandb.agent(sweep_id, train_with_sweep())
