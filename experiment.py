@@ -8,7 +8,7 @@ import wandb
 import os.path as path_util
 
 cuda_available = torch.cuda.is_available()
-data_code = '2021031401'
+data_code = '202d1030803'
 wandb_project_name = "scc" + data_code
 output_dir = "outputs"
 
@@ -36,7 +36,7 @@ def early_stopping_setting(model_args: ClassificationArgs):
     model_args.evaluate_during_training_steps = 1000
 
 
-def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=32):
+def hyperparameter_setting(model_args: ClassificationArgs, learning_rate=5e-5, train_batch_size=64):
     model_args.num_train_epochs = 128
     model_args.learning_rate = learning_rate
     # weight_decay 1e-5 - 1e-2
@@ -105,10 +105,10 @@ def output_eval_result(result, wrong=None):
 
 def train(train_df, eval_df, test_df, model_args):
     # Create a ClassificationModel
-    # bert, bert-large-uncased bert-base-uncased bert-base-cased-finetuned-mrpc
+    # bert, bert-large-uncased bert-base-uncased bert-base-cased-finetuned-mrpc allenai/scibert_scivocab_cased
     # xlnet，xlnet-base-cased xlnet-large-cased
     #
-    model = ClassificationModel("bert", "bert-base-cased", use_cuda=cuda_available, args=model_args)
+    model = ClassificationModel("bert", "bert-large-uncased", use_cuda=cuda_available, args=model_args)
 
     # Train the model
     model.train_model(train_df, eval_df=eval_df, f1=sklearn.metrics.f1_score,
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     # result, wrong_predictions = raw_train()
 
     # 使用early stopping
-    # result = train_with_early_stopping()
+    # result, wrong_predictions = train_with_early_stopping()
     # output_eval_result(result, wrong_predictions)
 
     batch_testing()
